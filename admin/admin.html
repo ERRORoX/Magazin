@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ — Master Nosirov</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <!-- Экран входа: один раз вводите имя и секретный ключ -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <h1 class="login-title">Master Nosirov</h1>
+            <p class="login-subtitle">Админ-панель</p>
+            <form id="loginForm" class="login-form">
+                <input type="text" id="loginUsername" class="form-input" placeholder="Имя пользователя" autocomplete="username" required>
+                <input type="password" id="loginSecretKey" class="form-input" placeholder="Секретный ключ" autocomplete="current-password" required>
+                <button type="submit" class="admin-btn login-btn">Войти</button>
+            </form>
+            <p id="loginError" class="login-error"></p>
+        </div>
+    </div>
+
+    <div id="appPanel" class="admin-container" style="display: none;">
+        <aside class="admin-sidebar">
+            <div class="sidebar-brand">
+                <div class="admin-avatar">
+                    <div class="avatar-inner">MN</div>
+                </div>
+                <div class="admin-info">
+                    <h2>Master Nosirov</h2>
+                    <span class="admin-role">Админ-панель</span>
+                </div>
+            </div>
+            <nav class="admin-nav">
+                <div class="nav-section">
+                    <span class="nav-section-title">Управление</span>
+                    <ul class="nav-list">
+                        <li><a href="#dashboard" class="nav-link active" data-tab="dashboard"><span class="nav-icon">📊</span><span>Дашборд</span></a></li>
+                        <li><a href="#orders" class="nav-link" data-tab="orders"><span class="nav-icon">📋</span><span>Заказы</span></a></li>
+                        <li><a href="#completed" class="nav-link" data-tab="completed"><span class="nav-icon">✅</span><span>Завершённые</span></a></li>
+                        <li><a href="#products" class="nav-link" data-tab="products"><span class="nav-icon">🖥</span><span>Товары</span></a></li>
+                        <li><a href="#settings" class="nav-link" data-tab="settings"><span class="nav-icon">⚙️</span><span>Настройки</span></a></li>
+                    </ul>
+                </div>
+                <div class="nav-section nav-section-token">
+                    <span class="nav-section-title">Сессия</span>
+                    <div class="token-block">
+                        <span class="token-status">Вы: <strong id="currentUsername">—</strong></span>
+                        <button type="button" class="admin-btn admin-btn-sm" id="logoutBtn">Выйти</button>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-page-header">
+                <div class="page-header-left">
+                    <h1>Master Nosirov — Админ</h1>
+                    <span class="last-updated" id="lastUpdated">Обновлено: —</span>
+                </div>
+                <div class="admin-actions">
+                    <button class="admin-btn admin-btn-primary" id="refreshData"><span>🔄</span> Обновить</button>
+                </div>
+            </header>
+
+            <!-- Дашборд -->
+            <div class="admin-tab active" id="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card clickable" data-goto="orders" title="Перейти к заказам">
+                        <div class="stat-icon stat-icon-default">📋</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statOrders">—</span>
+                            <span class="stat-label">Всего заказов</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-highlight clickable" data-goto="orders" data-filter-status="" title="Перейти к заказам">
+                        <div class="stat-icon stat-icon-highlight">📅</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statOrdersToday">—</span>
+                            <span class="stat-label">Заказов сегодня</span>
+                        </div>
+                    </div>
+                    <div class="stat-card clickable" data-goto="products" title="Перейти к товарам">
+                        <div class="stat-icon stat-icon-default">🖥</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statProducts">—</span>
+                            <span class="stat-label">Товаров</span>
+                        </div>
+                    </div>
+                    <div class="stat-card clickable" data-goto="completed" title="Завершённые заказы">
+                        <div class="stat-icon stat-icon-success">✅</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statShipped">—</span>
+                            <span class="stat-label">Завершённые</span>
+                        </div>
+                    </div>
+                    <div class="stat-card clickable" data-goto="orders" data-filter-status="new" title="Показать новые заказы">
+                        <div class="stat-icon stat-icon-default">🆕</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statNew">—</span>
+                            <span class="stat-label">Новых заказов</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-warning clickable" data-goto="products" data-filter-stock="low" title="Товары с остатком ≤ 2">
+                        <div class="stat-icon stat-icon-warning">⚠️</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statLowStock">—</span>
+                            <span class="stat-label">Низкий остаток</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-danger clickable" data-goto="products" data-filter-stock="out" title="Товары без остатка">
+                        <div class="stat-icon stat-icon-danger">📦</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="statOutOfStock">—</span>
+                            <span class="stat-label">Нет в наличии</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Заказы -->
+            <div class="admin-tab" id="orders">
+                <div class="tab-header">
+                    <h2>Заказы</h2>
+                    <div class="tab-actions">
+                        <input type="text" id="searchOrders" class="search-input" placeholder="Поиск по телефону или номеру заказа">
+                        <select id="filterOrderStatus" class="search-input" title="Завершённые — во вкладке «Завершённые»">
+                            <option value="">Все активные</option>
+                            <option value="new">Новый</option>
+                            <option value="awaiting_payment">Ожидает оплату</option>
+                            <option value="receipt_received">Чек получен</option>
+                            <option value="paid">Оплачен</option>
+                        </select>
+                        <select id="sortOrders" class="search-input" title="Сортировка по дате">
+                            <option value="desc">Сначала новые</option>
+                            <option value="asc">Сначала старые</option>
+                        </select>
+                        <select id="filterOrderPeriod" class="search-input" title="Период">
+                            <option value="">Все даты</option>
+                            <option value="today">За сегодня</option>
+                            <option value="week">За неделю</option>
+                            <option value="month">За месяц</option>
+                        </select>
+                        <button class="admin-btn" id="loadOrders" title="Обновить список заказов">🔄 Обновить</button>
+                        <button class="admin-btn" id="btnAddOrder">➕ Добавить заказ</button>
+                        <button class="admin-btn" id="exportOrdersCsv">📥 Экспорт CSV</button>
+                        <button class="admin-btn" id="backupDbBtn" title="Скачать копию БД">💾 Бэкап БД</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Номер</th>
+                                <th>ФИО</th>
+                                <th>Телефон</th>
+                                <th>Город</th>
+                                <th>Адрес</th>
+                                <th>Товар</th>
+                                <th>Статус</th>
+                                <th>Чек</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <tr><td colspan="9">Нет данных</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Завершённые заказы -->
+            <div class="admin-tab" id="completed">
+                <div class="tab-header">
+                    <h2>✅ Завершённые заказы</h2>
+                    <p class="tab-desc">Заказы со статусом «Отправлен». Здесь можно убрать заказ из списка.</p>
+                    <div class="tab-actions">
+                        <button class="admin-btn" id="loadCompletedOrders">🔄 Обновить</button>
+                        <button class="admin-btn" id="exportCompletedCsv">📥 Экспорт CSV</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Номер</th>
+                                <th>ФИО</th>
+                                <th>Телефон</th>
+                                <th>Город</th>
+                                <th>Адрес</th>
+                                <th>Товар</th>
+                                <th>Чек</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="completedOrdersTableBody">
+                            <tr><td colspan="8">Нет данных</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Товары -->
+            <div class="admin-tab" id="products">
+                <div class="tab-header">
+                    <h2>Товары (ноутбуки)</h2>
+                    <div class="tab-actions">
+                        <select id="filterProductStock" class="search-input">
+                            <option value="">Все товары</option>
+                            <option value="low">Низкий остаток (≤2 шт.)</option>
+                            <option value="out">Нет в наличии</option>
+                        </select>
+                        <button class="admin-btn" id="productsViewToggle" title="Переключить вид">🔲 Плитки</button>
+                        <button class="admin-btn" id="loadProducts" title="Обновить список товаров">🔄 Обновить</button>
+                        <button class="admin-btn" id="btnAddProduct">➕ Добавить товар</button>
+                    </div>
+                </div>
+                <div id="productsGridView" class="products-grid" style="display: none;"></div>
+                <div id="productsTableView" class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Название</th>
+                                <th>Категория</th>
+                                <th>Цена (сом.)</th>
+                                <th>Остаток</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr><td colspan="6">Нет данных</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Настройки -->
+            <div class="admin-tab" id="settings">
+                <div class="tab-header">
+                    <h2>Настройки</h2>
+                </div>
+                <div class="settings-subnav">
+                    <button type="button" class="settings-subtab active" data-settings-panel="users">👥 Пользователи</button>
+                    <button type="button" class="settings-subtab" data-settings-panel="env">🔐 Переменные .env</button>
+                    <button type="button" class="settings-subtab" data-settings-panel="bot">🤖 Тексты бота</button>
+                </div>
+                <div class="settings-panel active" id="settingsPanelUsers">
+                    <div class="settings-section">
+                        <div class="tab-actions" style="margin-bottom:12px;">
+                            <button class="admin-btn" id="btnAddAdminUser">➕ Добавить пользователя</button>
+                        </div>
+                        <p class="tab-desc">Пользователи, которые могут входить в панель. Создайте учётную запись и передайте имя и ключ сотруднику.</p>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Имя пользователя</th>
+                                        <th>Создан</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminUsersTableBody">
+                                    <tr><td colspan="4">Нет данных</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-panel" id="settingsPanelEnv">
+                    <div class="settings-section settings-env-section">
+                        <h3>Переменные окружения</h3>
+                        <p class="tab-desc">Токен, ключи, порт и т.д. После сохранения <strong>перезапустите бота</strong>. Секретные поля скрыты — нажмите 👁 чтобы показать.</p>
+                        <div id="envFormContainer" class="env-form-container">
+                            <div id="envFormFields"></div>
+                            <button type="button" class="admin-btn" id="saveEnvBtn">💾 Сохранить</button>
+                            <p id="envSaveMessage" class="env-message" style="display:none;"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-panel" id="settingsPanelBot">
+                    <div class="settings-section">
+                        <h3>Все тексты бота (русский и тоҷикӣ)</h3>
+                        <p class="tab-desc">Тексты из каждого блока: приветствие, каталог, заказ, помощь, кнопки и т.д. Изменённые значения сохраняются и подставляются в бота после перезапуска.</p>
+                        <div class="bot-texts-toolbar">
+                            <button type="button" class="admin-btn" id="loadBotTextsBtn">🔄 Обновить список</button>
+                            <button type="button" class="admin-btn" id="saveBotTextsBtn">💾 Сохранить изменения</button>
+                        </div>
+                        <p id="botTextsMessage" class="env-message" style="display:none;"></p>
+                        <div id="botTextsContainer" class="bot-texts-container">
+                            <p class="tab-desc">Нажмите «Обновить список», чтобы загрузить тексты.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модалка: новый пользователь админки -->
+    <div class="modal" id="modalAdminUser">
+        <div class="modal-content">
+            <span class="modal-close" id="closeAdminUser">&times;</span>
+            <h3>Добавить пользователя админки</h3>
+            <div class="form-group">
+                <label>Имя пользователя</label>
+                <input type="text" id="newAdminUsername" class="form-input" placeholder="Логин для входа">
+            </div>
+            <div class="form-group">
+                <label>Секретный ключ (пароль)</label>
+                <input type="password" id="newAdminSecretKey" class="form-input" placeholder="Не менее 4 символов. Передайте пользователю для входа.">
+            </div>
+            <button class="admin-btn" id="saveAdminUser">Создать пользователя</button>
+        </div>
+    </div>
+
+    <!-- Модалка: добавить заказ -->
+    <div class="modal" id="modalOrder">
+        <div class="modal-content">
+            <span class="modal-close" id="closeOrder">&times;</span>
+            <h3>Добавить заказ</h3>
+            <div class="form-group">
+                <label>ID пользователя Telegram</label>
+                <input type="number" id="orderUserId" class="form-input" placeholder="Например: 123456789" required>
+            </div>
+            <div class="form-group">
+                <label>Товар</label>
+                <select id="orderProductId" class="form-input" required>
+                    <option value="">Выберите товар...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>ФИО</label>
+                <input type="text" id="orderFullName" class="form-input" placeholder="Полное имя" required>
+            </div>
+            <div class="form-group">
+                <label>Телефон</label>
+                <input type="text" id="orderPhone" class="form-input" placeholder="+992 90 123 45 67" required>
+            </div>
+            <div class="form-group">
+                <label>Город</label>
+                <input type="text" id="orderCity" class="form-input" placeholder="Душанбе" required>
+            </div>
+            <div class="form-group">
+                <label>Адрес</label>
+                <textarea id="orderAddress" class="form-input" rows="2" placeholder="Улица, дом, квартира" required></textarea>
+            </div>
+            <button class="admin-btn" id="saveOrder">Создать заказ</button>
+        </div>
+    </div>
+
+    <!-- Модалка: просмотр чека -->
+    <div class="modal" id="modalReceipt">
+        <div class="modal-content">
+            <span class="modal-close" id="closeReceipt">&times;</span>
+            <h3>Фото чека</h3>
+            <div class="receipt-preview"><img id="receiptImage" src="" alt="Чек"></div>
+            <p><a id="receiptLink" href="" target="_blank">Открыть в новой вкладке</a></p>
+        </div>
+    </div>
+
+    <!-- Модалка: добавить/редактировать товар -->
+    <div class="modal" id="modalProduct">
+        <div class="modal-content">
+            <span class="modal-close" id="closeProduct">&times;</span>
+            <h3 id="modalProductTitle">Добавить товар</h3>
+            <input type="hidden" id="productId">
+            <div class="form-group">
+                <label>Название</label>
+                <input type="text" id="productTitle" class="form-input" placeholder="Ноутбук ...">
+            </div>
+            <div class="form-group">
+                <label>Описание</label>
+                <textarea id="productDescription" class="form-input" rows="3" placeholder="Краткое описание"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Цена (сомони)</label>
+                <input type="number" id="productPrice" class="form-input" min="0" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Категория</label>
+                <select id="productCategory" class="form-input">
+                    <option value="gaming">Игровые</option>
+                    <option value="study">Учёба</option>
+                    <option value="work">Работа</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>📦 Количество на складе (шт.)</label>
+                <input type="number" id="productStock" class="form-input" min="0" placeholder="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>📷 Фото (по желанию)</label>
+                <input type="file" id="productImage" accept="image/*" class="form-input">
+            </div>
+            <div class="form-group">
+                <label>🎬 Видео (по желанию)</label>
+                <input type="file" id="productVideo" accept="video/*" class="form-input">
+            </div>
+            <div id="uploadProgressWrap" class="upload-progress-wrap" style="display:none">
+                <div class="upload-progress-header">
+                    <span class="upload-progress-icon" id="uploadProgressIcon">⏳</span>
+                    <span class="upload-progress-label" id="uploadProgressLabel">Загрузка…</span>
+                </div>
+                <div class="upload-progress-detail" id="uploadProgressDetail"></div>
+                <div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill"></div></div>
+            </div>
+            <button class="admin-btn" id="saveProduct">💾 Сохранить</button>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
