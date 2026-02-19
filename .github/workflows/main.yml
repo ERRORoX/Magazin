@@ -1,0 +1,39 @@
+# Сборка Windows .exe на GitHub (бесплатно)
+# Загрузите проект на GitHub — сборка запустится сама, .exe можно скачать в разделе Actions
+
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:   # ручной запуск: Actions → Build Windows EXE → Run workflow
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Get project
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build EXE
+        shell: cmd
+        run: |
+          python -m PyInstaller --onefile --name TelegramBot --console --hidden-import=aiogram --hidden-import=aiohttp --hidden-import=aiosqlite --hidden-import=dotenv --hidden-import=config --hidden-import=api_server --hidden-import=database --hidden-import=services --hidden-import=utils --hidden-import=models --noconfirm bot.py
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: TelegramBot-Windows
+          path: dist/TelegramBot.exe
